@@ -215,14 +215,15 @@ void readScene(char* filename, Object** objects) {
 						(strcmp(key, "normal") == 0) || (strcmp(key, "diffuse_color") == 0) ||
 						(strcmp(key, "specular_color") == 0) || (strcmp(key, "direction") == 0)) {
 						double* value = nextVector(json);
-						if (strcmp(tempKey, "light") == 0){
+						if (strcmp(key, "color") == 0){
+							if (strcmp(tempKey, "light") == 0){
 								objects[i]->light.color[0] = value[0];
 								objects[i]->light.color[1] = value[1];
 								objects[i]->light.color[2] = value[2];
 							}
 							else{
 								fprintf(stderr, "Error: Unknown type!\n");
-								exit(1)
+								exit(1);
 							}
 						}
 						else if (strcmp(key, "direction") == 0){
@@ -248,7 +249,7 @@ void readScene(char* filename, Object** objects) {
 								objects[i]->plane.position[1] = value[1];
 								objects[i]->plane.position[2] = value[2];
 							}
-							else if (srcmp(tempKey, "light") == 0){
+							else if (strcmp(tempKey, "light") == 0){
 								objects[i]->light.position[0] = value[0];
 								objects[i]->light.position[1] = value[1];
 								objects[i]->light.position[2] = value[2];
@@ -353,7 +354,7 @@ void readScene(char* filename, Object** objects) {
 							}
 							else {
 								fprintf(stderr, "Error: Unknown type!\n");
-								exit(1)
+								exit(1);
 							}
 						}
 					else {
