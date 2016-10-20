@@ -148,7 +148,7 @@ double* intersect(double* Rd, int objectNum, Object** objects) {
 			}
 			else {
 				fprintf(stderr, "Error: finding the distance unsuccessfully.\n");
-				return (1);
+				exit(1);
 			}
 		}
 		else if (objects[i]->kind == 2) {
@@ -225,58 +225,69 @@ double fang(int lightIndex, double* intersectPosition, Object** objects){
 	}
 }
 
-double diffuse(int objectIndex, int lightIndex, double* N, double* L, Object** objects){
+double* diffuse(int objectIndex, int lightIndex, double* N, double* L, Object** objects){
 	double value = N[0]*L[0]+N[1]*L[1]+N[2]*L[2]; // N*L
-	double result;
+	double result[3];
 	if (value <= 0){
 		result = 0;
 	}
 	else {
 		if (objects[objectIndex]->kind == 1){
-			double KI;
+			double KI[3];
 			double NL;
-			KI = objects[objectIndex]->sphere.diffuseColor[0]*objects[lightIndex]->light.color[0] +
-			objects[objectIndex]->sphere.diffuseColor[1]*objects[lightIndex]->light.color[1] +
-			objects[objectIndex]->sphere.diffuseColor[2]*objects[lightIndex]->light.color[2];
+			KI[0] = objects[objectIndex]->sphere.diffuseColor[0]*objects[lightIndex]->light.color[0];
+			KI[1] = objects[objectIndex]->sphere.diffuseColor[1]*objects[lightIndex]->light.color[1;
+			KI[2] = objects[objectIndex]->sphere.diffuseColor[2]*objects[lightIndex]->light.color[2];
 			NL = value;
-			result = KI*value;
+			result[0] = KI[0]*value;
+			result[1] = KI[1]*value;
+			result[2] = KI[2]*value;
 		}
 		else if (objects[objectIndex]->kind == 2){
-			double KI;
+			double KI[3];
 			double NL;
-			KI = objects[objectIndex]->plane.diffuseColor[0]*objects[lightIndex]->light.color[0] +
-			objects[objectIndex]->plane.diffuseColor[1]*objects[lightIndex]->light.color[1] +
-			objects[objectIndex]->plane.diffuseColor[2]*objects[lightIndex]->light.color[2];
+			KI[0] = objects[objectIndex]->plane.diffuseColor[0]*objects[lightIndex]->light.color[0];
+			KI[1] = objects[objectIndex]->plane.diffuseColor[1]*objects[lightIndex]->light.color[1];
+			KI[2] = objects[objectIndex]->plane.diffuseColor[2]*objects[lightIndex]->light.color[2];
 			NL = value;
-			result = KI*value;
+			result[0] = KI[0]*value;
+			result[1] = KI[1]*value;
+			result[2] = KI[2]*value;
 		}
 	}
 	return result;
 }
 
-double specular(int objectIndex, int lightIndex, double NL, double* V, double* R, Object** objects){
+double* specular(int objectIndex, int lightIndex, double NL, double* V, double* R, Object** objects){
 	double value = V[0]*R[0]+V[1]*R[1]+V[2]*R[2];
+	double result[3];
 	if (NL <= 0 || value <= 0){
-		result = 0;
+		result[0] = 0;
+		result[1] = 0;
+		result[2] = 0;
 	}
 	else {
 		if (objects[objectIndex]->kind == 1){
-			double KI;
+			double KI[3];
 			double VR;
-			KI = objects[objectIndex]->sphere.specularColor[0]*objects[lightIndex]->light.color[0] +
-			objects[objectIndex]->sphere.specularColor[1]*objects[lightIndex]->light.color[1] +
-			objects[objectIndex]->sphere.specularColor[2]*objects[lightIndex]->light.color[2];
+			KI[0] = objects[objectIndex]->sphere.specularColor[0]*objects[lightIndex]->light.color[0];
+			KI[1] = objects[objectIndex]->sphere.specularColor[1]*objects[lightIndex]->light.color[1];
+			KI[2] = objects[objectIndex]->sphere.specularColor[2]*objects[lightIndex]->light.color[2];
 			VR = value;
-			result = KI * (VR^20);  // I set up the ns to 20
+			result[0] = KI[0]*(VR^20);  // I set up the ns to 20
+			result[1] = KI[1]*(VR^20);
+			result[2] = KI[2]*(VR^20);
 		}
 		else if (objects[objectIndex]->kind == 2){
-			double KI;
+			double KI[3];
 			double VR;
-			KI = objects[objectIndex]->plane.specularColor[0]*objects[lightIndex]->light.color[0] +
-			objects[objectIndex]->plane.specularColor[1]*objects[lightIndex]->light.color[1] +
-			objects[objectIndex]->plane.specularColor[2]*objects[lightIndex]->light.color[2];
+			KI[0] = objects[objectIndex]->plane.specularColor[0]*objects[lightIndex]->light.color[0];
+			KI[1] = objects[objectIndex]->plane.specularColor[1]*objects[lightIndex]->light.color[1];
+			KI[2] = objects[objectIndex]->plane.specularColor[2]*objects[lightIndex]->light.color[2];
 			VR = value;
-			result = KI * (VR^20);  // I set up the ns to 20
+			result[0] = KI[0]*(VR^20);  // I set up the ns to 20
+			result[1] = KI[1]*(VR^20);
+			result[2] = KI[2]*(VR^20);
 		}
 	}
 	return reuslt;
