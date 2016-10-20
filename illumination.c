@@ -30,7 +30,7 @@ static inline void normalize(double* v) {
  	double len = sqrt(sqr(v[0]) + sqr(v[1]) + sqr(v[2]));
 	v[0] /= len;
 	v[1] /= len;
-  	v[2] /= len;
+  v[2] /= len;
 }
 
 
@@ -161,7 +161,7 @@ double* intersect(double* Rd, int objectNum, Object** objects) {
 			}
 			else {
 				fprintf(stderr, "Error: finding the distance unsuccessfully.\n");
-				return (1);
+				exit(1);
 			}
 		}
 	}
@@ -172,8 +172,8 @@ double* intersect(double* Rd, int objectNum, Object** objects) {
 }
 
 double frad(int lightIndex, double* intersectPosition, Object** objects){
-	double* lightPostion[3];
-	double* radial[3];
+	double lightPostion[3];
+	double radial[3];
 	double distance;
 	double result;
 	lightPostion[0] = objects[lightIndex]->light.position[0];
@@ -195,8 +195,8 @@ double frad(int lightIndex, double* intersectPosition, Object** objects){
 }
 
 double fang(int lightIndex, double* intersectPosition, Object** objects){
-	double* Vl[3];
-	double* Vo[3];
+	double Vl[3];
+	double Vo[3];
 	double angular;
 	double theta;
 	Vl[0] = objects[lightIndex]->light.direction[0];
@@ -204,13 +204,13 @@ double fang(int lightIndex, double* intersectPosition, Object** objects){
 	Vl[2] = objects[lightIndex]->light.direction[2];
 	Vl = normalize(Vl);
 	// Vo = intersectPosition - lightPostion
-	Vo[0] = intersectPosition - objects[lightIndex]->light.position[0];
-	Vo[1] = intersectPosition - objects[lightIndex]->light.position[1];
-	Vo[2] = intersectPosition - objects[lightIndex]->light.position[2];
+	Vo[0] = intersectPosition[0] - objects[lightIndex]->light.position[0];
+	Vo[1] = intersectPosition[1] - objects[lightIndex]->light.position[1];
+	Vo[2] = intersectPosition[2] - objects[lightIndex]->light.position[2];
 	Vo = normalize(Vo);
 
 	double cosa = Vl[0]*Vo[0]+Vl[1]*Vo[1]+Vl[2]*Vo[2];
-	if (objects[lightIndex]->light.angularA0 != NULL){
+	if (objects[lightIndex]->light.angularA0 != 0){
 		angular = objects[lightIndex]->light.angularA0;
 	}
 	else {
@@ -221,7 +221,7 @@ double fang(int lightIndex, double* intersectPosition, Object** objects){
 		return 0;
 	}
 	else {
-		return cosa^angualr;
+		return cosa^angualar;
 	}
 }
 
@@ -229,14 +229,16 @@ double* diffuse(int objectIndex, int lightIndex, double* N, double* L, Object** 
 	double value = N[0]*L[0]+N[1]*L[1]+N[2]*L[2]; // N*L
 	double result[3];
 	if (value <= 0){
-		result = 0;
+		result[0] = 0;
+		result[1] = 0;
+		result[2] = 0;
 	}
 	else {
 		if (objects[objectIndex]->kind == 1){
 			double KI[3];
 			double NL;
 			KI[0] = objects[objectIndex]->sphere.diffuseColor[0]*objects[lightIndex]->light.color[0];
-			KI[1] = objects[objectIndex]->sphere.diffuseColor[1]*objects[lightIndex]->light.color[1;
+			KI[1] = objects[objectIndex]->sphere.diffuseColor[1]*objects[lightIndex]->light.color[1];
 			KI[2] = objects[objectIndex]->sphere.diffuseColor[2]*objects[lightIndex]->light.color[2];
 			NL = value;
 			result[0] = KI[0]*value;
@@ -274,9 +276,9 @@ double* specular(int objectIndex, int lightIndex, double NL, double* V, double* 
 			KI[1] = objects[objectIndex]->sphere.specularColor[1]*objects[lightIndex]->light.color[1];
 			KI[2] = objects[objectIndex]->sphere.specularColor[2]*objects[lightIndex]->light.color[2];
 			VR = value;
-			result[0] = KI[0]*(VR^20);  // I set up the ns to 20
-			result[1] = KI[1]*(VR^20);
-			result[2] = KI[2]*(VR^20);
+			result[0] = KI[0]*pow(VR, 20);  // I set up the ns to 20
+			result[1] = KI[1]*pow(VR, 20);
+			result[2] = KI[2]*pow(VR, 20);
 		}
 		else if (objects[objectIndex]->kind == 2){
 			double KI[3];
@@ -285,12 +287,12 @@ double* specular(int objectIndex, int lightIndex, double NL, double* V, double* 
 			KI[1] = objects[objectIndex]->plane.specularColor[1]*objects[lightIndex]->light.color[1];
 			KI[2] = objects[objectIndex]->plane.specularColor[2]*objects[lightIndex]->light.color[2];
 			VR = value;
-			result[0] = KI[0]*(VR^20);  // I set up the ns to 20
-			result[1] = KI[1]*(VR^20);
-			result[2] = KI[2]*(VR^20);
+			result[0] = KI[0]*pow(VR, 20);  // I set up the ns to 20
+			result[1] = KI[1]*pow(VR, 20);
+			result[2] = KI[2]*pow(VR, 20);
 		}
 	}
-	return reuslt;
+	return result;
 }
 
 double clamp(double num){
@@ -355,7 +357,7 @@ PPMimage* rayCasting(char* filename, int w, int h, Object** objects) {
 			double Rd[3] = { vx, vy, 1 };
 
 			normalize(Rd);
-			int intersect[2]
+			double intersect[2];
       intersect = intersect(Rd, i, objects);
       intersection = (int)intersect[0];
       bestT = intersect[1];
@@ -387,7 +389,7 @@ PPMimage* rayCasting(char* filename, int w, int h, Object** objects) {
         	double L[3];
         	double R[3];
 					double Rdn[3]; // Rdn = light position - Ron;
-					for (z = 0; objects[z] != 0; z++){
+					for (int z = 0; objects[z] != 0; z++){
 						if (objects[z]->kind == 3){
 							Rdn[0] = objects[z]->light.position[0] - Ron[0];
 							Rdn[1] = objects[z]->light.position[1] - Ron[1];
@@ -396,14 +398,16 @@ PPMimage* rayCasting(char* filename, int w, int h, Object** objects) {
 							R[0] = 2*N[0]*L[0]*N[0] - L[0]; // R=(2N*L)N - L
 							R[1] = 2*N[1]*L[1]*N[1] - L[1];
 							R[2] = 2*N[2]*L[2]*N[2] - L[2];
+							double diff[3];
+							double spec[3];
 							double NL = N[0]*L[0]+N[1]*L[1]+N[2]*L[2];
 							double frad = frad(z, intersectPosition, objects);
 							double fang = fang(z, intersectPosition, objects);
-							double diff = diffuse(intersection, z, N, L, objects);
-							double sepc = specular(intersection, z, NL, V, R, objects);
-							pixel->r += frad*fang*(diff+spec);
-							pixle->g;
-							pixel->b;
+							diff = diffuse(intersection, z, N, L, objects);
+							sepc = specular(intersection, z, NL, V, R, objects);
+							pixel->r += frad*fang*(diff[0]+spec[0]);
+							pixle->g += frad*fang*(diff[1]+spec[1]);
+							pixel->b += frad*fang*(diff[2]+spec[2]);
 						}
 					}
 				}
