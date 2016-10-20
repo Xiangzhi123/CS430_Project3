@@ -213,22 +213,27 @@ void readScene(char* filename, Object** objects) {
 					// so we would like to read that as a 3d vector, and saving the values into sphere object or plane object.
 					else if ((strcmp(key, "color") == 0) || (strcmp(key, "position") == 0) ||
 						(strcmp(key, "normal") == 0) || (strcmp(key, "diffuse_color") == 0) ||
-						(strcmp(key, "specular_color") == 0)) {
+						(strcmp(key, "specular_color") == 0) || (strcmp(key, "direction") == 0)) {
 						double* value = nextVector(json);
-						if (strcmp(key, "color") == 0) {
-							if (strcmp(tempKey, "sphere") == 0){
-								objects[i]->sphere.position[0] = value[0];
-								objects[i]->sphere.position[1] = value[1];
-								objects[i]->sphere.position[2] = value[2];
-							}
-							else if (strcmp(tempKey, "plane") == 0){
-								objects[i]->plane.position[0] = value[0];
-								objects[i]->plane.position[1] = value[1];
-								objects[i]->plane.position[2] = value[2];
+						if (strcmp(tempKey, "light") == 0){
+								objects[i]->light.color[0] = value[0];
+								objects[i]->light.color[1] = value[1];
+								objects[i]->light.color[2] = value[2];
 							}
 							else{
 								fprintf(stderr, "Error: Unknown type!\n");
 								exit(1)
+							}
+						}
+						else if (strcmp(key, "direction") == 0){
+							if (strcmp(tempKey, "light") == 0){
+								objects[i]->light.direction[0] = value[0];
+								objects[i]->light.direction[1] = value[1];
+								objects[i]->light.direction[2] = value[2];
+							}
+							else{
+								fprintf(stderr, "Error: Unknown type!\n");
+								exit(1);
 							}
 						}
 						// if the key is position, then sphere and plane would be considered respectively
@@ -242,6 +247,11 @@ void readScene(char* filename, Object** objects) {
 								objects[i]->plane.position[0] = value[0];
 								objects[i]->plane.position[1] = value[1];
 								objects[i]->plane.position[2] = value[2];
+							}
+							else if (srcmp(tempKey, "light") == 0){
+								objects[i]->light.position[0] = value[0];
+								objects[i]->light.position[1] = value[1];
+								objects[i]->light.position[2] = value[2];
 							}
 							else {
 								fprintf(stderr, "Error: Unknown type!\n");
@@ -293,7 +303,8 @@ void readScene(char* filename, Object** objects) {
 						}
 					}
 					else if ((strcmp(key, "raidal-a2") == 0) || (strcmp(key, "radial-a1") == 0) ||
-						(strcmp(key, "radial-a0") == 0) || (strcmp(key, "angular-a0") == 0)){
+						(strcmp(key, "radial-a0") == 0) || (strcmp(key, "angular-a0") == 0) ||
+						(strcmp(key, "theta") == 0)){
 							double value = nextNumber(json);
 							if (strcmp(key, "radial-a0") == 0){
 								if (strcmp(tempKey, "light") == 0){
@@ -316,6 +327,15 @@ void readScene(char* filename, Object** objects) {
 							else if (strcmp(key, "radial-a2") == 0){
 								if (strcmp(tempKey, "light") == 0){
 									objects[i]->light.radialA2 = value;
+								}
+								else {
+									fprintf(stderr, "Error: Unknown type!");
+									exit(1);
+								}
+							}
+							else if (strcmp(key, "theta") == 0){
+								if (strcmp(tempKey, "light") == 0){
+									objects[i]->light.theta = value;
 								}
 								else {
 									fprintf(stderr, "Error: Unknown type!");

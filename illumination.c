@@ -131,7 +131,7 @@ double planeIntersection(double* Ro, double* Rd, double* position, double* norma
 	return -1;
 }
 
-int intersect(double* Rd, int objectNum, Object** objects) {
+int* intersect(double* Rd, int objectNum, Object** objects) {
 	int closestObjectNum = -1;
 	double bestT = INFINITY;
 	int i;
@@ -165,7 +165,133 @@ int intersect(double* Rd, int objectNum, Object** objects) {
 			}
 		}
 	}
-	return closestObjectNum;
+  int result[2];
+  result[0] = closestObjectNum;
+  result[1] = bestT;
+	return result;
+}
+
+double frad(int lightIndex, double* intersectPosition, Object** objects){
+	double* lightPostion[3];
+	double* radial[3];
+	double distance;
+	double result;
+	lightPostion[0] = objects[lightIndex]->light.position[0];
+	lightPostion[1] = objects[lightIndex]->light.position[1];
+	lightPostion[2] = objects[lightIndex]->light.position[2];
+	distance = sqr(lightPostion[0]-intersectPosition[0]) + sqr(lightPostion[1]-intersectPosition[1]) +
+						sqr(lightPostion[2]-intersectPosition[2]);
+	distance = sqrt(distance);
+	radial[0] = objects[lightIndex]->light.radialA0;
+	radial[1] = objects[lightIndex]->light.radialA1;
+	radial[2] = objects[lightIndex]->light.radialA2;
+	if (distance == INFINITY){
+		return 1.0;
+	}
+	else {
+		result = 1 / (radial[2]*sqr(distance) + radial[1]*distance + radial[0]);
+		return result;
+	}
+}
+
+double fang(int lightIndex, double* intersectPosition, Object** objects){
+	double* Vl[3];
+	double* Vo[3];
+	double angular;
+	double theta;
+	Vl[0] = objects[lightIndex]->light.direction[0];
+	Vl[1] = objects[lightIndex]->light.direction[1];
+	Vl[2] = objects[lightIndex]->light.direction[2];
+	Vl = normalize(Vl);
+	// Vo = intersectPosition - lightPostion
+	Vo[0] = intersectPosition - objects[lightIndex]->light.position[0];
+	Vo[1] = intersectPosition - objects[lightIndex]->light.position[1];
+	Vo[2] = intersectPosition - objects[lightIndex]->light.position[2];
+	Vo = normalize(Vo);
+
+	double cosa = Vl[0]*Vo[0]+Vl[1]*Vo[1]+Vl[2]*Vo[2];
+	if (objects[lightIndex]->light.angularA0 != NULL){
+		angular = objects[lightIndex]->light.angularA0;
+	}
+	else {
+		return 1.0;
+	}
+	theta = objects[lightIndex]->light.theta;
+	if (cos(theta) > cosa){
+		return 0;
+	}
+	else {
+		return cosa^angualr;
+	}
+}
+
+double diffuse(int objectIndex, int lightIndex, double* N, double* L, Object** objects){
+	double value = N[0]*L[0]+N[1]*L[1]+N[2]*L[2]; // N*L
+	double result;
+	if (value <= 0){
+		result = 0;
+	}
+	else {
+		if (objects[objectIndex]->kind == 1){
+			double KI;
+			double NL;
+			KI = objects[objectIndex]->sphere.diffuseColor[0]*objects[lightIndex]->light.color[0] +
+			objects[objectIndex]->sphere.diffuseColor[1]*objects[lightIndex]->light.color[1] +
+			objects[objectIndex]->sphere.diffuseColor[2]*objects[lightIndex]->light.color[2];
+			NL = value;
+			result = KI*value;
+		}
+		else if (objects[objectIndex]->kind == 2){
+			double KI;
+			double NL;
+			KI = objects[objectIndex]->plane.diffuseColor[0]*objects[lightIndex]->light.color[0] +
+			objects[objectIndex]->plane.diffuseColor[1]*objects[lightIndex]->light.color[1] +
+			objects[objectIndex]->plane.diffuseColor[2]*objects[lightIndex]->light.color[2];
+			NL = value;
+			result = KI*value;
+		}
+	}
+	return result;
+}
+
+double specular(int objectIndex, int lightIndex, double NL, double* V, double* R, Object** objects){
+	double value = V[0]*R[0]+V[1]*R[1]+V[2]*R[2];
+	if (NL <= 0 || value <= 0){
+		result = 0;
+	}
+	else {
+		if (objects[objectIndex]->kind == 1){
+			double KI;
+			double VR;
+			KI = objects[objectIndex]->sphere.specularColor[0]*objects[lightIndex]->light.color[0] +
+			objects[objectIndex]->sphere.specularColor[1]*objects[lightIndex]->light.color[1] +
+			objects[objectIndex]->sphere.specularColor[2]*objects[lightIndex]->light.color[2];
+			VR = value;
+			result = KI * (VR^20);  // I set up the ns to 20
+		}
+		else if (objects[objectIndex]->kind == 2){
+			double KI;
+			double VR;
+			KI = objects[objectIndex]->plane.specularColor[0]*objects[lightIndex]->light.color[0] +
+			objects[objectIndex]->plane.specularColor[1]*objects[lightIndex]->light.color[1] +
+			objects[objectIndex]->plane.specularColor[2]*objects[lightIndex]->light.color[2];
+			VR = value;
+			result = KI * (VR^20);  // I set up the ns to 20
+		}
+	}
+	return reuslt;
+}
+
+double clamp(double num){
+	if (num <= 0){
+		return 0;
+	}
+	else if (num >= 1){
+		return 1;
+	}
+	else {
+		return num;
+	}
 }
 
 PPMimage* rayCasting(char* filename, int w, int h, Object** objects) {
@@ -175,6 +301,7 @@ PPMimage* rayCasting(char* filename, int w, int h, Object** objects) {
 		exit(1);
 	}
 	int cameraFound = 0;
+	int lightCount = 0;
 	double width;
 	double height;
 	int i;
@@ -187,6 +314,9 @@ PPMimage* rayCasting(char* filename, int w, int h, Object** objects) {
 				fprintf(stderr, "Error: invalid size for camera");
 				exit(1);
 			}
+		}
+		else if (objects[i]->kind == 3){
+			lightCount += 1;
 		}
 	}
 	if (cameraFound == 0) {
@@ -205,6 +335,7 @@ PPMimage* rayCasting(char* filename, int w, int h, Object** objects) {
 	double pixheight = height / h;
 	double pointx, pointy, pointz;
 	int j, k;
+  double Ro[3] = {0, 0, 0};
 	for (k = 0; k<h; k++) {
 		int count = (h-k-1)*w*3;
 		double vy = -height / 2 + pixheight * (k + 0.5);
@@ -213,41 +344,67 @@ PPMimage* rayCasting(char* filename, int w, int h, Object** objects) {
 			double Rd[3] = { vx, vy, 1 };
 
 			normalize(Rd);
-			int intersection = intersect(Rd, i, objects);
+			int intersect[2]
+      intersect = intersect(Rd, i, objects);
+      intersection = intersect[0];
+      bestT = intersect[1];
 			if (intersection>=0) {
-        double Ron[3];
-        // N, L, R, V
-        double V[3];
-        double N[3];
-        double L[3];
-        V[0] = Rd[0];
-        V[1] = Rd[1];
-        V[2] = Rd[2];
-        if (objects[intersection]->kind == 1){
-          N[0] = objects[intersection]->sphere.position[0];
-          N[1] = objects[intersection]->sphere.position[1];
-          N[2] = objects[intersection]->sphere.position[2];
-          pixel->r = (int)((objects[intersection]->sphere.color[0]) * 255);
-          pixel->g = (int)((objects[intersection]->sphere.color[1]) * 255);
-          pixel->b = (int)((objects[intersection]->sphere.color[2]) * 255);
-        }
-        else if (objects[intersection]->kind == 2){
-          N[0] = objects[intersection]->plane.normal[0];
-          N[1] = objects[intersection]->plane.normal[1];
-          N[2] = objects[intersection]->plane.normal[2];
-          pixel->r = (int)((objects[intersection]->plane.color[0]) * 255);
-          pixel->g = (int)((objects[intersection]->plane.color[1]) * 255);
-          pixel->b = (int)((objects[intersection]->plane.color[2]) * 255);
-        }
+				double Ron[3];
+				double N[3];
+				double V[3];
+				V[0] = -Rd[0];
+				V[1] = -Rd[1];
+				V[2] = -Rd[2];
+				Ron[0] = bestT*Rd[0] + Ro[0];
+				Ron[1] = bestT*Rd[1] + Ro[1];
+				Ron[2] = bestT*Rd[2] + Ro[2];
+				if (objects[intersection]->kind == 1){
+					N[0] = Ron[0] - objects[intersection]->sphere.position[0];
+					N[1] = Ron[1] - objects[intersection]->sphere.position[1];
+					N[2] = Ron[2] - objects[intersection]->sphere.position[2];
+				}
+				else if (objects[intersection]->kind == 2){
+					N[0] = objects[intersection]->plane.normal[0];
+					N[1] = objects[intersection]->plane.normal[1];
+					N[2] = objects[intersection]->plane.normal[2];
+				}
+				double intersectPosition[3];
+				intersectPosition[0] = Ro[0]+Rd[0]*bestT;
+				intersectPosition[1] = Ro[1]+Rd[1]*bestT;
+				intersectPosition[2] = Ro[2]+Rd[2]*bestT;
+				for (int w=0; w<lightCount; w++){
+        	double L[3];
+        	double R[3];
+					double Rdn[3]; // Rdn = light position - Ron;
+					for (z = 0; objects[z] != 0; z++){
+						if (objects[z]->kind == 3){
+							Rdn[0] = objects[z]->light.position[0] - Ron[0];
+							Rdn[1] = objects[z]->light.position[1] - Ron[1];
+							Rdn[2] = objects[z]->light.position[2] - Ron[2];
+							L = Rdn;
+							R[0] = 2*N[0]*L[0]*N[0] - L[0]; // R=(2N*L)N - L
+							R[1] = 2*N[1]*L[1]*N[1] - L[1];
+							R[2] = 2*N[2]*L[2]*N[2] - L[2];
+							double NL = N[0]*L[0]+N[1]*L[1]+N[2]*L[2];
+							double frad = frad(z, intersectPosition, objects);
+							double fang = fang(z, intersectPosition, objects);
+							double diff = diffuse(intersection, z, N, L, objects);
+							double sepc = specular(intersection, z, NL, V, R, objects);
+							pixel->r += frad*fang*(diff+spec);
+							pixle->g;
+							pixel->b;
+						}
+					}
+				}
 			}
 			else {
 				pixel->r = 0;
 				pixel->g = 0;
 				pixel->b = 0;
 			}
-			buffer->data[count++] = pixel->r;
-			buffer->data[count++] = pixel->g;
-			buffer->data[count++] = pixel->b;
+			buffer->data[count++] = 255 * clamp(pixel->r);
+			buffer->data[count++] = 255 * clamp(pixel->g);
+			buffer->data[count++] = 255 * clamp(pixel->b);
 			}
 		}
 	return buffer;
