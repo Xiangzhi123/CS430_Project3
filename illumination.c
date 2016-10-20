@@ -131,7 +131,7 @@ double planeIntersection(double* Ro, double* Rd, double* position, double* norma
 	return -1;
 }
 
-int* intersect(double* Rd, int objectNum, Object** objects) {
+double* intersect(double* Rd, int objectNum, Object** objects) {
 	int closestObjectNum = -1;
 	double bestT = INFINITY;
 	int i;
@@ -166,7 +166,7 @@ int* intersect(double* Rd, int objectNum, Object** objects) {
 		}
 	}
   int result[2];
-  result[0] = closestObjectNum;
+  result[0] = (double) closestObjectNum;
   result[1] = bestT;
 	return result;
 }
@@ -346,7 +346,7 @@ PPMimage* rayCasting(char* filename, int w, int h, Object** objects) {
 			normalize(Rd);
 			int intersect[2]
       intersect = intersect(Rd, i, objects);
-      intersection = intersect[0];
+      intersection = (int)intersect[0];
       bestT = intersect[1];
 			if (intersection>=0) {
 				double Ron[3];
