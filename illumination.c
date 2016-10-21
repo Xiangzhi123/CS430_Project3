@@ -30,7 +30,7 @@ static inline void normalize(double* v) {
  	double len = sqrt(sqr(v[0]) + sqr(v[1]) + sqr(v[2]));
 	v[0] /= len;
 	v[1] /= len;
-  v[2] /= len;
+  	v[2] /= len;
 }
 
 
@@ -263,7 +263,7 @@ double* diffuse(int objectIndex, int lightIndex, double* N, double* L, Object** 
 
 double* specular(int objectIndex, int lightIndex, double NL, double* V, double* R, Object** objects){
 	double value = V[0]*R[0]+V[1]*R[1]+V[2]*R[2];
-	double result;
+	double* result;
 	result = malloc(sizeof(double)*3);
 	if (NL <= 0 || value <= 0){
 		result[0] = 0;
@@ -294,7 +294,7 @@ double* specular(int objectIndex, int lightIndex, double NL, double* V, double* 
 			result[2] = KI[2]*pow(VR, 20);
 		}
 	}
-	return *result;
+	return result;
 }
 
 double clamp(double num){
@@ -350,7 +350,7 @@ PPMimage* rayCasting(char* filename, int w, int h, Object** objects) {
 	double pixheight = height / h;
 	double pointx, pointy, pointz;
 	int j, k;
-  double Ro[3] = {0, 0, 0};
+  	double Ro[3] = {0, 0, 0};
 	for (k = 0; k<h; k++) {
 		int count = (h-k-1)*w*3;
 		double vy = -height / 2 + pixheight * (k + 0.5);
@@ -389,8 +389,8 @@ PPMimage* rayCasting(char* filename, int w, int h, Object** objects) {
 				intersectPosition[1] = Ro[1]+Rd[1]*bestT;
 				intersectPosition[2] = Ro[2]+Rd[2]*bestT;
 				for (int w=0; w<lightCount; w++){
-        	double L[3];
-        	double R[3];
+        		double L[3];
+        		double R[3];
 					double Rdn[3]; // Rdn = light position - Ron;
 					for (int z = 0; objects[z] != 0; z++){
 						if (objects[z]->kind == 3){
