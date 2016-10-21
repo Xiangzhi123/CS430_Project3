@@ -165,7 +165,7 @@ double* intersect(double* Rd, int objectNum, Object** objects) {
 			}
 		}
 	}
-  int result[2];
+  double result[2];
   result[0] = (double) closestObjectNum;
   result[1] = bestT;
 	return result;
@@ -221,13 +221,14 @@ double fang(int lightIndex, double* intersectPosition, Object** objects){
 		return 0;
 	}
 	else {
-		return cosa^angualar;
+		return pow(cosa, angular);
 	}
 }
 
 double* diffuse(int objectIndex, int lightIndex, double* N, double* L, Object** objects){
 	double value = N[0]*L[0]+N[1]*L[1]+N[2]*L[2]; // N*L
-	double result[3];
+	double* result;
+	result = malloc(sizeof(double)*3);
 	if (value <= 0){
 		result[0] = 0;
 		result[1] = 0;
@@ -262,7 +263,8 @@ double* diffuse(int objectIndex, int lightIndex, double* N, double* L, Object** 
 
 double* specular(int objectIndex, int lightIndex, double NL, double* V, double* R, Object** objects){
 	double value = V[0]*R[0]+V[1]*R[1]+V[2]*R[2];
-	double result[3];
+	double result;
+	result = malloc(sizeof(double)*3);
 	if (NL <= 0 || value <= 0){
 		result[0] = 0;
 		result[1] = 0;
@@ -292,7 +294,7 @@ double* specular(int objectIndex, int lightIndex, double NL, double* V, double* 
 			result[2] = KI[2]*pow(VR, 20);
 		}
 	}
-	return result;
+	return *result;
 }
 
 double clamp(double num){
@@ -358,9 +360,10 @@ PPMimage* rayCasting(char* filename, int w, int h, Object** objects) {
 
 			normalize(Rd);
 			double intersect[2];
+			int intersection;
       intersect = intersect(Rd, i, objects);
       intersection = (int)intersect[0];
-      bestT = intersect[1];
+      double bestT = intersect[1];
 			if (intersection>=0) {
 				double Ron[3];
 				double N[3];
@@ -394,19 +397,22 @@ PPMimage* rayCasting(char* filename, int w, int h, Object** objects) {
 							Rdn[0] = objects[z]->light.position[0] - Ron[0];
 							Rdn[1] = objects[z]->light.position[1] - Ron[1];
 							Rdn[2] = objects[z]->light.position[2] - Ron[2];
-							L = Rdn;
+							L[0] = Rdn[0];
+							L[1] = Rdn[1];
+							L[2] = Rdn[2];
 							R[0] = 2*N[0]*L[0]*N[0] - L[0]; // R=(2N*L)N - L
 							R[1] = 2*N[1]*L[1]*N[1] - L[1];
 							R[2] = 2*N[2]*L[2]*N[2] - L[2];
 							double diff[3];
 							double spec[3];
 							double NL = N[0]*L[0]+N[1]*L[1]+N[2]*L[2];
-							double frad = frad(z, intersectPosition, objects);
-							double fang = fang(z, intersectPosition, objects);
+							double frad, fang;
+							frad = frad(z, intersectPosition, objects);
+							fang = fang(z, intersectPosition, objects);
 							diff = diffuse(intersection, z, N, L, objects);
-							sepc = specular(intersection, z, NL, V, R, objects);
+							spec = specular(intersection, z, NL, V, R, objects);
 							pixel->r += frad*fang*(diff[0]+spec[0]);
-							pixle->g += frad*fang*(diff[1]+spec[1]);
+							pixel->g += frad*fang*(diff[1]+spec[1]);
 							pixel->b += frad*fang*(diff[2]+spec[2]);
 						}
 					}
