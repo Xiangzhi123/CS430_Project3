@@ -303,7 +303,7 @@ void readScene(char* filename, Object** objects) {
 							}
 						}
 					}
-					else if ((strcmp(key, "raidal-a2") == 0) || (strcmp(key, "radial-a1") == 0) ||
+					else if ((strcmp(key, "radial-a2") == 0) || (strcmp(key, "radial-a1") == 0) ||
 						(strcmp(key, "radial-a0") == 0) || (strcmp(key, "angular-a0") == 0) ||
 						(strcmp(key, "theta") == 0)){
 							double value = nextNumber(json);
