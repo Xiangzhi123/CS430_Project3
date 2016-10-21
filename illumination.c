@@ -219,7 +219,7 @@ double fang(int lightIndex, double* intersectPosition, Object** objects){
 	}
 	theta = objects[lightIndex]->light.theta;
 	if (cos(theta) > cosa){
-		return 0.0;
+		return 0;
 	}
 	else {
 		return pow(cosa, angular);
@@ -279,9 +279,9 @@ double* specular(int objectIndex, int lightIndex, double NL, double* V, double* 
 			KI[1] = objects[objectIndex]->sphere.specularColor[1]*objects[lightIndex]->light.color[1];
 			KI[2] = objects[objectIndex]->sphere.specularColor[2]*objects[lightIndex]->light.color[2];
 			VR = value;
-			result[0] = KI[0]*pow(VR, 20);  // I set up the ns to 20
-			result[1] = KI[1]*pow(VR, 20);
-			result[2] = KI[2]*pow(VR, 20);
+			result[0] = KI[0]*pow(VR, objects[lightIndex]->light.ns);  // I set up the ns to 20
+			result[1] = KI[1]*pow(VR, objects[lightIndex]->light.ns);
+			result[2] = KI[2]*pow(VR, objects[lightIndex]->light.ns);
 		}
 		else if (objects[objectIndex]->kind == 2){
 			double KI[3];
@@ -290,9 +290,9 @@ double* specular(int objectIndex, int lightIndex, double NL, double* V, double* 
 			KI[1] = objects[objectIndex]->plane.specularColor[1]*objects[lightIndex]->light.color[1];
 			KI[2] = objects[objectIndex]->plane.specularColor[2]*objects[lightIndex]->light.color[2];
 			VR = value;
-			result[0] = KI[0]*pow(VR, 20);  // I set up the ns to 20
-			result[1] = KI[1]*pow(VR, 20);
-			result[2] = KI[2]*pow(VR, 20);
+			result[0] = KI[0]*pow(VR, objects[lightIndex]->light.ns);  // I set up the ns to 20
+			result[1] = KI[1]*pow(VR, objects[lightIndex]->light.ns);
+			result[2] = KI[2]*pow(VR, objects[lightIndex]->light.ns);
 		}
 	}
 	return result;
@@ -371,9 +371,9 @@ PPMimage* rayCasting(char* filename, int w, int h, Object** objects) {
 				double Ron[3];
 				double N[3];
 				double V[3];
-				V[0] = -Rd[0];
-				V[1] = -Rd[1];
-				V[2] = -Rd[2];
+				V[0] = Rd[0];
+				V[1] = Rd[1];
+				V[2] = Rd[2];
 				Ron[0] = bestT*Rd[0] + Ro[0];
 				Ron[1] = bestT*Rd[1] + Ro[1];
 				Ron[2] = bestT*Rd[2] + Ro[2];

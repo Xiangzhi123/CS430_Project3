@@ -168,6 +168,7 @@ void readScene(char* filename, Object** objects) {
 			}
 			else if (strcmp(value, "light") == 0){
 				objects[i]->kind = 3;
+				objects[i]->light.ns = 20;
 			}
 			else {
 				fprintf(stderr, "Error: Unknown type, \"%s\", on line number %d.\n", value, line);
@@ -305,7 +306,7 @@ void readScene(char* filename, Object** objects) {
 					}
 					else if ((strcmp(key, "radial-a2") == 0) || (strcmp(key, "radial-a1") == 0) ||
 						(strcmp(key, "radial-a0") == 0) || (strcmp(key, "angular-a0") == 0) ||
-						(strcmp(key, "theta") == 0)){
+						(strcmp(key, "theta") == 0) || (strcmp(key, "ns") == 0)){
 							double value = nextNumber(json);
 							if (strcmp(key, "radial-a0") == 0){
 								if (strcmp(tempKey, "light") == 0){
@@ -346,6 +347,15 @@ void readScene(char* filename, Object** objects) {
 							else if (strcmp(key, "angular-a0") == 0){
 								if (strcmp(tempKey, "light") == 0){
 									objects[i]->light.angularA0 = value;
+								}
+								else {
+									fprintf(stderr, "Error: Unknown type!");
+									exit(1);
+								}
+							}
+							else if (strcmp(key, "ns") == 0){
+								if (strcmp(tempKey, "light") == 0){
+									objects[i]->light.ns = value;
 								}
 								else {
 									fprintf(stderr, "Error: Unknown type!");
