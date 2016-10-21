@@ -30,7 +30,7 @@ static inline void normalize(double* v) {
  	double len = sqrt(sqr(v[0]) + sqr(v[1]) + sqr(v[2]));
 	v[0] /= len;
 	v[1] /= len;
-  	v[2] /= len;
+  v[2] /= len;
 }
 
 
@@ -165,10 +165,9 @@ double* intersect(double* Rd, int objectNum, Object** objects) {
 			}
 		}
 	}
-	double* result;
-  	result = malloc(sizeof(double)*2);
-  	result[0] = (double) closestObjectNum;
-  	result[1] = bestT;
+  double result[2];
+  result[0] = (double) closestObjectNum;
+  result[1] = bestT;
 	return result;
 }
 
@@ -203,12 +202,12 @@ double fang(int lightIndex, double* intersectPosition, Object** objects){
 	Vl[0] = objects[lightIndex]->light.direction[0];
 	Vl[1] = objects[lightIndex]->light.direction[1];
 	Vl[2] = objects[lightIndex]->light.direction[2];
-	normalize(Vl);
+	Vl = normalize(Vl);
 	// Vo = intersectPosition - lightPostion
 	Vo[0] = intersectPosition[0] - objects[lightIndex]->light.position[0];
 	Vo[1] = intersectPosition[1] - objects[lightIndex]->light.position[1];
 	Vo[2] = intersectPosition[2] - objects[lightIndex]->light.position[2];
-	normalize(Vo);
+	Vo = normalize(Vo);
 
 	double cosa = Vl[0]*Vo[0]+Vl[1]*Vo[1]+Vl[2]*Vo[2];
 	if (objects[lightIndex]->light.angularA0 != 0){
@@ -264,7 +263,7 @@ double* diffuse(int objectIndex, int lightIndex, double* N, double* L, Object** 
 
 double* specular(int objectIndex, int lightIndex, double NL, double* V, double* R, Object** objects){
 	double value = V[0]*R[0]+V[1]*R[1]+V[2]*R[2];
-	double* result;
+	double result;
 	result = malloc(sizeof(double)*3);
 	if (NL <= 0 || value <= 0){
 		result[0] = 0;
@@ -279,9 +278,9 @@ double* specular(int objectIndex, int lightIndex, double NL, double* V, double* 
 			KI[1] = objects[objectIndex]->sphere.specularColor[1]*objects[lightIndex]->light.color[1];
 			KI[2] = objects[objectIndex]->sphere.specularColor[2]*objects[lightIndex]->light.color[2];
 			VR = value;
-			result[0] = KI[0]*pow(VR, objects[lightIndex]->light.ns);  // I set up the ns to 20
-			result[1] = KI[1]*pow(VR, objects[lightIndex]->light.ns);
-			result[2] = KI[2]*pow(VR, objects[lightIndex]->light.ns);
+			result[0] = KI[0]*pow(VR, 20);  // I set up the ns to 20
+			result[1] = KI[1]*pow(VR, 20);
+			result[2] = KI[2]*pow(VR, 20);
 		}
 		else if (objects[objectIndex]->kind == 2){
 			double KI[3];
@@ -290,12 +289,12 @@ double* specular(int objectIndex, int lightIndex, double NL, double* V, double* 
 			KI[1] = objects[objectIndex]->plane.specularColor[1]*objects[lightIndex]->light.color[1];
 			KI[2] = objects[objectIndex]->plane.specularColor[2]*objects[lightIndex]->light.color[2];
 			VR = value;
-			result[0] = KI[0]*pow(VR, objects[lightIndex]->light.ns);  // I set up the ns to 20
-			result[1] = KI[1]*pow(VR, objects[lightIndex]->light.ns);
-			result[2] = KI[2]*pow(VR, objects[lightIndex]->light.ns);
+			result[0] = KI[0]*pow(VR, 20);  // I set up the ns to 20
+			result[1] = KI[1]*pow(VR, 20);
+			result[2] = KI[2]*pow(VR, 20);
 		}
 	}
-	return result;
+	return *result;
 }
 
 double clamp(double num){
@@ -351,7 +350,7 @@ PPMimage* rayCasting(char* filename, int w, int h, Object** objects) {
 	double pixheight = height / h;
 	double pointx, pointy, pointz;
 	int j, k;
-  	double Ro[3] = {0, 0, 0};
+  double Ro[3] = {0, 0, 0};
 	for (k = 0; k<h; k++) {
 		int count = (h-k-1)*w*3;
 		double vy = -height / 2 + pixheight * (k + 0.5);
@@ -360,20 +359,18 @@ PPMimage* rayCasting(char* filename, int w, int h, Object** objects) {
 			double Rd[3] = { vx, vy, 1 };
 
 			normalize(Rd);
-			double* inter;
-			inter = malloc(sizeof(double)*2);
+			double intersect[2];
 			int intersection;
-			
-      		inter = intersect(Rd, i, objects);
-     		intersection = (int)inter[0];
-      		double bestT = inter[1];
+      intersect = intersect(Rd, i, objects);
+      intersection = (int)intersect[0];
+      double bestT = intersect[1];
 			if (intersection>=0) {
 				double Ron[3];
 				double N[3];
 				double V[3];
-				V[0] = Rd[0];
-				V[1] = Rd[1];
-				V[2] = Rd[2];
+				V[0] = -Rd[0];
+				V[1] = -Rd[1];
+				V[2] = -Rd[2];
 				Ron[0] = bestT*Rd[0] + Ro[0];
 				Ron[1] = bestT*Rd[1] + Ro[1];
 				Ron[2] = bestT*Rd[2] + Ro[2];
@@ -387,45 +384,36 @@ PPMimage* rayCasting(char* filename, int w, int h, Object** objects) {
 					N[1] = objects[intersection]->plane.normal[1];
 					N[2] = objects[intersection]->plane.normal[2];
 				}
-				normalize(N);
 				double intersectPosition[3];
 				intersectPosition[0] = Ro[0]+Rd[0]*bestT;
 				intersectPosition[1] = Ro[1]+Rd[1]*bestT;
 				intersectPosition[2] = Ro[2]+Rd[2]*bestT;
-				int w;
-				for (w=0; w<lightCount; w++){
-        		double L[3];
-        		double R[3];
+				for (int w=0; w<lightCount; w++){
+        	double L[3];
+        	double R[3];
 					double Rdn[3]; // Rdn = light position - Ron;
-					int z;
-					for (z = 0; objects[z] != 0; z++){
+					for (int z = 0; objects[z] != 0; z++){
 						if (objects[z]->kind == 3){
 							Rdn[0] = objects[z]->light.position[0] - Ron[0];
 							Rdn[1] = objects[z]->light.position[1] - Ron[1];
 							Rdn[2] = objects[z]->light.position[2] - Ron[2];
-							normalize(Rdn);
 							L[0] = Rdn[0];
 							L[1] = Rdn[1];
 							L[2] = Rdn[2];
-							normalize(L);
-							// R=(2N*L)N - L
-							// dot product for N*L
+							R[0] = 2*N[0]*L[0]*N[0] - L[0]; // R=(2N*L)N - L
+							R[1] = 2*N[1]*L[1]*N[1] - L[1];
+							R[2] = 2*N[2]*L[2]*N[2] - L[2];
+							double diff[3];
+							double spec[3];
 							double NL = N[0]*L[0]+N[1]*L[1]+N[2]*L[2];
-							R[0] = 2*NL*N[0] - L[0];
-							R[1] = 2*NL*N[1] - L[1];
-							R[2] = 2*NL*N[2] - L[2];
-							double* diff;
-							double* spec;
-							diff = malloc(sizeof(double)*3);
-							spec = malloc(sizeof(double)*3);
-							double fr, fa;
-							fr = frad(z, intersectPosition, objects);
-							fa = fang(z, intersectPosition, objects);
+							double frad, fang;
+							frad = frad(z, intersectPosition, objects);
+							fang = fang(z, intersectPosition, objects);
 							diff = diffuse(intersection, z, N, L, objects);
 							spec = specular(intersection, z, NL, V, R, objects);
-							pixel->r += fr*fa*(diff[0]+spec[0]);
-							pixel->g += fr*fa*(diff[1]+spec[1]);
-							pixel->b += fr*fa*(diff[2]+spec[2]);
+							pixel->r += frad*fang*(diff[0]+spec[0]);
+							pixel->g += frad*fang*(diff[1]+spec[1]);
+							pixel->b += frad*fang*(diff[2]+spec[2]);
 						}
 					}
 				}
