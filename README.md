@@ -5,5 +5,5 @@ How to use: My program will run correctly if users follow this input pattern: ra
 Otherwise, an error message will be shown.
 
 Compile: 
-make: Compiles the program using make
+Makefile: Compiles the program using make
 
