@@ -387,6 +387,7 @@ PPMimage* rayCasting(char* filename, int w, int h, Object** objects) {
 					N[1] = objects[intersection]->plane.normal[1];
 					N[2] = objects[intersection]->plane.normal[2];
 				}
+				normalize(N);
 				double intersectPosition[3];
 				intersectPosition[0] = Ro[0]+Rd[0]*bestT;
 				intersectPosition[1] = Ro[1]+Rd[1]*bestT;
@@ -402,17 +403,21 @@ PPMimage* rayCasting(char* filename, int w, int h, Object** objects) {
 							Rdn[0] = objects[z]->light.position[0] - Ron[0];
 							Rdn[1] = objects[z]->light.position[1] - Ron[1];
 							Rdn[2] = objects[z]->light.position[2] - Ron[2];
+							normalize(Rdn);
 							L[0] = Rdn[0];
 							L[1] = Rdn[1];
 							L[2] = Rdn[2];
-							R[0] = 2*N[0]*L[0]*N[0] - L[0]; // R=(2N*L)N - L
-							R[1] = 2*N[1]*L[1]*N[1] - L[1];
-							R[2] = 2*N[2]*L[2]*N[2] - L[2];
+							normalize(L);
+							// R=(2N*L)N - L
+							// dot product for N*L
+							double NL = N[0]*L[0]+N[1]*L[1]+N[2]*L[2];
+							R[0] = 2*NL*N[0] - L[0];
+							R[1] = 2*NL*N[1] - L[1];
+							R[2] = 2*NL*N[2] - L[2];
 							double* diff;
 							double* spec;
 							diff = malloc(sizeof(double)*3);
 							spec = malloc(sizeof(double)*3);
-							double NL = N[0]*L[0]+N[1]*L[1]+N[2]*L[2];
 							double fr, fa;
 							fr = frad(z, intersectPosition, objects);
 							fa = fang(z, intersectPosition, objects);
