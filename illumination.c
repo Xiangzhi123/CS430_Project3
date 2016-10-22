@@ -6,9 +6,9 @@
 
 // create a stuct that represents a single pixel, same as what we did in class
 typedef struct PPMRGBpixel {
-	unsigned char r;
-	unsigned char g;
-	unsigned char b;
+	double r;
+	double g;
+	double b;
 } PPMRGBpixel;
 
 // create struct that represents a single image
