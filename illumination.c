@@ -360,6 +360,10 @@ PPMimage* rayCasting(char* filename, int w, int h, Object** objects) {
       		inter = intersect(Rd, i, objects);
      		int intersection = (int)inter[0];
       		double bestT = inter[1];
+			pixel->r = 0;
+			pixel->g = 0;
+			pixel->b = 0;
+			int hasShadow = 0;
 			if (intersection>=0) {
 				double Ron[3];
 				double N[3];
@@ -389,34 +393,56 @@ PPMimage* rayCasting(char* filename, int w, int h, Object** objects) {
         		double R[3];
 				double Rdn[3]; // Rdn = light position - Ron;
 				int z;
-				for (z = 0; objects[z] != 0; z++){
-					if (objects[z]->kind == 3){
+				for (z = 0; objects[z] != 0; z++) {
+					if (objects[z]->kind == 3) {
 						Rdn[0] = objects[z]->light.position[0] - Ron[0];
 						Rdn[1] = objects[z]->light.position[1] - Ron[1];
 						Rdn[2] = objects[z]->light.position[2] - Ron[2];
+						double t;
+						double lightDistance = sqrt(sqr(Rdn[0]) + sqr(Rdn[1]) + sqr(Rdn[2]));
+						t = lightDistance;
 						normalize(Rdn);
-						L[0] = Rdn[0];
-						L[1] = Rdn[1];
-						L[2] = Rdn[2];
-						normalize(L);
-						// R= L-(2N*L)N
-						// dot product for N*L
-						double NL = N[0]*L[0]+N[1]*L[1]+N[2]*L[2];
-						R[0] = -2*NL*N[0] + L[0];
-						R[1] = -2*NL*N[1] + L[1];
-						R[2] = -2*NL*N[2] + L[2];
-						double* diff;
-						double* spec;
-						diff = malloc(sizeof(double)*3);
-						spec = malloc(sizeof(double)*3);
-						double fr, fa;
-						fr = frad(z, intersectPosition, objects);
-						fa = fang(z, intersectPosition, objects);
-						diff = diffuse(intersection, z, N, L, objects);
-						spec = specular(intersection, z, NL, V, R, objects);
-						pixel->r += fr*fa*(diff[0]+spec[0]);
-						pixel->g += fr*fa*(diff[1]+spec[1]);
-						pixel->b += fr*fa*(diff[2]+spec[2]);
+						int w;
+						for (w = 0; objects[w] != 0; w++){
+							if (w != intersection){
+								if (objects[w]->kind == 1) {
+									t = sphereIntersection(Ron, Rdn, objects[w]->sphere.position, objects[w]->sphere.radius);
+									if (t > 0 && t < lightDistance){
+										hasShadow = 1;
+									}
+								}
+								else if (objects[w]->kind == 2) {
+									t = planeIntersection(Ron, Rdn, objects[w]->plane.position, objects[w]->plane.normal);
+									if (t > 0 && t < lightDistance){
+										hasShadow = 1;
+									}
+								}
+							}
+						}
+						if (hasShadow == 0){
+							L[0] = Rdn[0];
+							L[1] = Rdn[1];
+							L[2] = Rdn[2];
+							normalize(L);
+							// R= L-(2N*L)N
+							// dot product for N*L
+							double NL = N[0] * L[0] + N[1] * L[1] + N[2] * L[2];
+							R[0] = -2 * NL*N[0] + L[0];
+							R[1] = -2 * NL*N[1] + L[1];
+							R[2] = -2 * NL*N[2] + L[2];
+							double* diff;
+							double* spec;
+							diff = malloc(sizeof(double) * 3);
+							spec = malloc(sizeof(double) * 3);
+							double fr, fa;
+							fr = frad(z, intersectPosition, objects);
+							fa = fang(z, intersectPosition, objects);
+							diff = diffuse(intersection, z, N, L, objects);
+							spec = specular(intersection, z, NL, V, R, objects);
+							pixel->r += fr*fa*(diff[0] + spec[0]);
+							pixel->g += fr*fa*(diff[1] + spec[1]);
+							pixel->b += fr*fa*(diff[2] + spec[2]);
+						}
 					}
 				}
 			}
@@ -428,9 +454,6 @@ PPMimage* rayCasting(char* filename, int w, int h, Object** objects) {
 			buffer->data[count++] = (unsigned char)255 * clamp(pixel->r);
 			buffer->data[count++] = (unsigned char)255 * clamp(pixel->g);
 			buffer->data[count++] = (unsigned char)255 * clamp(pixel->b);
-			pixel->r = 0;
-			pixel->g = 0;
-			pixel->b = 0;
 		}
 	}
 	return buffer;
