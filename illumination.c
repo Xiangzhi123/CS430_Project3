@@ -349,7 +349,7 @@ PPMimage* rayCasting(char* filename, int w, int h, Object** objects) {
 	for (k = 0; k<h; k++) {
 		int count = (h-k-1)*w*3;
 		double vy = -height / 2 + pixheight * (k + 0.5);
-		for (j = 0; j<h; j++) {
+		for (j = 0; j<w; j++) {
 			double vx = -width / 2 + pixwidth * (j + 0.5);
 			double Rd[3] = { vx, vy, 1 };
 
