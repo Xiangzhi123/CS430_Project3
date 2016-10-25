@@ -271,7 +271,9 @@ double* diffuse(int objectIndex, int lightIndex, double* N, double* L, Object** 
 
 // specular reflection
 // directly reflect the light
-// if NL>0 and 
+// if NL>0 and RV>0, then do the KI(RV)^ns, where R is the reflection of the L,
+// V is the unit vector points from camera to the object, equals to Rd.
+// Also, K is the specular color, I is the light color and ns ---> phong model, represents shiniess
 double* specular(int objectIndex, int lightIndex, double NL, double* V, double* R, Object** objects){
 	double VR = V[0]*R[0]+V[1]*R[1]+V[2]*R[2];
 	double* result;
@@ -304,6 +306,9 @@ double* specular(int objectIndex, int lightIndex, double NL, double* V, double* 
 	return result;
 }
 
+// we only expect the value of color from 0.0 to 1.0 here
+// Thus, if the number is greater than 1, then return 1, and if the number 
+// is less than 0, then return 0. Otherwise, return the number
 double clamp(double num){
 	if (num <= 0){
 		return 0;
@@ -314,6 +319,7 @@ double clamp(double num){
 	return num;
 }
 
+// raycasting function
 PPMimage* rayCasting(char* filename, int w, int h, Object** objects) {
 	PPMimage* buffer = (PPMimage*)malloc(sizeof(PPMimage));
 	if (objects[0] == NULL) {
@@ -363,9 +369,9 @@ PPMimage* rayCasting(char* filename, int w, int h, Object** objects) {
 			double* inter;
 			inter = malloc(sizeof(double)*2);
 			
-      		inter = intersect(Rd, i, objects);
-     		int intersection = (int)inter[0];
-      		double bestT = inter[1];
+      			inter = intersect(Rd, i, objects);
+     			int intersection = (int)inter[0];
+      			double bestT = inter[1];
 			pixel->r = 0;
 			pixel->g = 0;
 			pixel->b = 0;
@@ -395,8 +401,8 @@ PPMimage* rayCasting(char* filename, int w, int h, Object** objects) {
 				intersectPosition[0] = Ron[0];
 				intersectPosition[1] = Ron[1];
 				intersectPosition[2] = Ron[2];
-        		double L[3];
-        		double R[3];
+        			double L[3];
+        			double R[3];
 				double Rdn[3]; // Rdn = light position - Ron;
 				int z;
 				for (z = 0; objects[z] != 0; z++) {
@@ -409,6 +415,7 @@ PPMimage* rayCasting(char* filename, int w, int h, Object** objects) {
 						t = lightDistance;
 						normalize(Rdn);
 						int w;
+						// shading part
 						for (w = 0; objects[w] != 0; w++){
 							if (w != intersection){
 								if (objects[w]->kind == 1) {
