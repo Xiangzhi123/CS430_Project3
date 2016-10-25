@@ -234,6 +234,9 @@ double fang(int lightIndex, double* intersectPosition, Object** objects){
 	}
 }
 
+// diffuse reflection
+// if NL>0, do the KI(NL), where N is the normal, L is the light,
+// K is the diffuse color and I is the light color
 double* diffuse(int objectIndex, int lightIndex, double* N, double* L, Object** objects){
 	double NL = N[0]*L[0]+N[1]*L[1]+N[2]*L[2]; // N*L
 	double* result;
@@ -266,6 +269,9 @@ double* diffuse(int objectIndex, int lightIndex, double* N, double* L, Object** 
 	return result;
 }
 
+// specular reflection
+// directly reflect the light
+// if NL>0 and 
 double* specular(int objectIndex, int lightIndex, double NL, double* V, double* R, Object** objects){
 	double VR = V[0]*R[0]+V[1]*R[1]+V[2]*R[2];
 	double* result;
